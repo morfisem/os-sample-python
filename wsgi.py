@@ -3,6 +3,8 @@ from flask import Flask
 #application = Flask(__name__)
 from app import app as application
 
+if __name__ == "__main__":
+    application.run()
 '''@application.route("/")
 def hello():
     return "Getting ready2!!!!!!"
