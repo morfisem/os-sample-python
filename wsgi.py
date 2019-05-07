@@ -3,14 +3,14 @@ from flask import Flask
 #application = Flask(__name__)
 from app import app as application
 
-@application.route("/")
+'''@application.route("/")
 def hello():
     return "Getting ready2!!!!!!"
 
 if __name__ == "__main__":
     application.run()
 
-'''
+####################################3
 import sys
 
 # add your project directory to the sys.path
