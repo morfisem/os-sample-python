@@ -4,6 +4,8 @@ from flask_jwt import _jwt
 from flask_restful import Api
 import json
 import datetime
+import eventlet
+eventlet.monkey_patch()
 
 from sqlalchemy.dialects import sqlite, postgresql, mysql
 
@@ -126,3 +128,4 @@ def on_leave(data):
 if __name__ == '__main__':
     #app.run(debug=False)  # important to mention debug=True
     app.run(host='0.0.0.0', port=8080)
+    socketio.run(app, host='0.0.0.0', port=8080)
