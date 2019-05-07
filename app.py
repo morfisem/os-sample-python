@@ -122,3 +122,7 @@ def on_leave(data):
     username = valiidate_chat_event(token)
     if username:
         leave_room(room)
+
+if __name__ == '__main__':
+    #app.run(debug=False)  # important to mention debug=True
+    app.run(host='0.0.0.0', port=8080)
