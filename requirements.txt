@@ -18,3 +18,5 @@ Flask-CORS==3.0.7
 Flask-SocketIO==3.3.2
 passlib==1.7.1
 eventlet==0.24.1
+networkx
+gunicorn
