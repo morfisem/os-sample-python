@@ -122,8 +122,10 @@ class JoinEvent(Resource):
     @jwt_required
     def post(self, event_id):
         parser = reqparse.RequestParser()
+        parser.add_argument('unjoin', type=str, required=False, help='Must enter the store id')
 
         data = parser.parse_args()
+        unjoin =data["unjoin"]
         
         event = EventModel.find_by_id(event_id)
 
@@ -136,9 +138,16 @@ class JoinEvent(Resource):
         if event.id not in [user_event.id for user_event in user_events]:
             return {'message': 'Access Denied'}, 404
         
-        event.add_user_and_save(current_user)
+        if not unjoin or unjoin==0:
+            event.add_user_and_save(current_user)
+        else:
+            remaining_participants = event.remove_user_and_save(current_user)
+            if len(remaining_participants.split(',')) < 2:
+                event.delete_from_db()
+                Chats.delete_chat(event_id=event.id)
 
         return event.json()
+
 
 class Requests(Resource):
     @classmethod

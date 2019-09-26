@@ -16,9 +16,13 @@ class EventModel(db.Model):
     location = db.Column(db.String(80))
     duration = db.Column(db.Integer)
     owner = db.Column(db.String(80))
+    icon = db.Column(db.String(300))
+    idea_id = db.Column(db.Integer)
+    description = db.Column(db.String(300))
 
 
-    def __init__(self, title, event_type, event_time, participants, access, event_state, location, duration, owner):
+    def __init__(self, title, event_type, event_time, participants, access, event_state,
+                location, duration, owner, icon, idea_id, description):
         self.title = title
         self.event_type = event_type
         self.event_time = event_time
@@ -28,6 +32,9 @@ class EventModel(db.Model):
         self.location = location
         self.duration = duration
         self.owner = owner
+        self.icon = icon
+        self.idea_id = idea_id
+        self.description = description
 
     def save_to_db(self):
         db.session.add(self)
@@ -38,19 +45,25 @@ class EventModel(db.Model):
         db.session.commit()
 
     def json(self):
-        return {'title': self.title, 'evet_type': self.event_type,
-                'event_type': self.event_type, 'event_time': self.event_time,
+        return {'title': self.title, 'event_type': self.event_type, 'event_time': self.event_time,
                 "participants": self.participants,
                 "event_state": self.event_state,"location": self.location,
-                "id":self.id, "duration":self.duration, "owner":self.owner}
+                "id":self.id, "duration":self.duration, "owner":self.owner, "icon":self.icon, "description": self.description}
 
     def add_user_and_save(self, username):
         if username in self.participants.split(','):
             return
         self.participants += "," + username
-        if self.event_state == 0:
-            self.event_state = 1
         self.save_to_db()
+    
+    def remove_user_and_save(self, username):
+        participants = self.participants.split(',')
+        if username not in participants:
+            return self.participants
+        participants.remove(username)
+        self.participants = ",".join(participants)
+        self.save_to_db()
+        return self.participants
 
     @classmethod
     def get_participant_events(cls, username):
@@ -65,13 +78,30 @@ class EventModel(db.Model):
     def find_by_state(cls, event_state):
         return cls.query.filter_by(event_state=event_state).all()
     
+    def get_event_viewers(self):
+        user_events = {}
+        basic_viewers = self.participants.split(',') + [self.owner]
+        if 1 == self.access:
+            return None
+        elif 2 == self.access:
+            friendsList = FriendshipModel.get_user_friends(main_user=self.owner, friend_type=1)
+            palList = FriendshipModel.get_user_friends(main_user=self.owner, friend_type=2)
+            return friendsList + palList + basic_viewers
+        elif 3 == self.access:
+            friendsList = FriendshipModel.get_user_friends(main_user=self.owner, friend_type=1)
+            return friendsList + basic_viewers
+        else:
+            return basic_viewers
+    
     @classmethod
     def find_by_username(cls, username):
         user_events = {}
-        allActiveEvents = cls.query.filter_by(event_state=1).all()
-        allNonActiveEvents = cls.query.filter_by(event_state=0).all()
+        allEvents = cls.query.all()
+        #allActiveEvents = cls.query.filter_by(event_state=1).all()
+        #allNonActiveEvents = cls.query.filter_by(event_state=0).all()
 
-        for event in allActiveEvents:
+        #for event in allActiveEvents:
+        for event in allEvents:
             if 1 == event.access:
                 user_events[event.id] = event
             elif 2 == event.access:    
@@ -88,7 +118,7 @@ class EventModel(db.Model):
             
             if username in event.participants.split(',') or username == event.owner:
                 user_events[event.id] = event
-        
+        '''
         for event in allNonActiveEvents:
             requests = RequestModel.find_by_event_id(event.id)
             if not requests:
@@ -97,6 +127,7 @@ class EventModel(db.Model):
                 if username == request.requesting_user or username == request.requested_user:
                     user_events[event.id] = event
                     break
+        '''
         return user_events.values()
     
     @classmethod

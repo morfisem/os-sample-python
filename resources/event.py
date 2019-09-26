@@ -5,12 +5,20 @@ from models.event import EventModel
 
 import datetime
 
+
 class Events(Resource):
     @classmethod 
-    def create_new_event(cls, title, event_type, owner,access, location, duration):
-        event = EventModel( title=title, event_time="",
-                            event_type=event_type, participants=owner,
-                            event_state=0, access=access, location=location, duration=duration, owner=owner)
+    def get_all(cls):
+        return EventModel.get_all()
+    @classmethod 
+    def create_new_event(cls, title, event_type, owner,access, location, duration,
+                        participants=None, event_time="", icon="", idea_id="", description=""):
+        if not participants:
+            participants=owner
+        event = EventModel( title=title, event_time=event_time,
+                            event_type=event_type, participants=participants,
+                            event_state=0, access=access, location=location, 
+                            duration=duration, owner=owner, icon=icon, idea_id=idea_id, description=description)
         event.save_to_db()
         return event
     @jwt_required
@@ -58,6 +66,7 @@ class Events(Resource):
         parser.add_argument('event_location', type=str, required=False, help='Must enter the store id')
         parser.add_argument('access', type=str, required=False, help='Must enter the store id')
         parser.add_argument('duration', type=str, required=False, help='Must enter the store id')
+        parser.add_argument('description', type=str, required=False, help='Must enter the store id')
 
         data = parser.parse_args()
         #event = Events.create_new_event( title=data["title"], event_time=data['event_time'], event_type=data['event_type'],
@@ -71,6 +80,7 @@ class Events(Resource):
         access = data["access"]
         duration = data["duration"]
         event_time = data["event_time"]
+        description = data["description"] 
 
         event = EventModel.find_by_id(event_id)
         current_user = get_jwt_identity()
@@ -87,8 +97,12 @@ class Events(Resource):
             event.access = access
         if duration:
             event.duration = duration
+        if description:
+            event.description = description
         if event_time and RequestModel.expiration_to_datetime(event_time):
             event.event_time = event_time
+            event.event_state = 1
+        
         
         event.save_to_db()
         return event.json()

@@ -4,6 +4,7 @@ from models.userInfo import UserInfoModel, UserSettingsModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 import datetime
 
+
 class UserRegister(Resource):
     parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
     parser.add_argument('username', type=str, required=True, help='This field cannot be left blank')
@@ -14,6 +15,7 @@ class UserRegister(Resource):
 
     def get(self):
         return self.post()
+
     def post(self):
         data = UserRegister.parser.parse_args()
 
@@ -34,8 +36,7 @@ class UserRegister(Resource):
                 'message': 'User {} was created'.format(data['username']),
                 'access_token': access_token,
                 'refresh_token': refresh_token
-                }
-
+            }
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -67,12 +68,13 @@ class UserLogin(Resource):
         else:
             return {'message': 'Wrong credentials'}
 
+
 class UserLogoutAccess(Resource):
     @jwt_required
     def post(self):
         jti = get_raw_jwt()['jti']
         try:
-            revoked_token = RevokedTokenModel(jti = jti)
+            revoked_token = RevokedTokenModel(jti=jti)
             revoked_token.add()
             return {'message': 'Access token has been revoked'}
         except:
@@ -105,6 +107,7 @@ class AllUsers(Resource):
         users = UserModel.query.all()
         users_with_info = [UserInfoModel.find_by_name(user.username).json() for user in users]
         return {'users': users_with_info}
+
 
 class UserSettings(Resource):
     @jwt_required

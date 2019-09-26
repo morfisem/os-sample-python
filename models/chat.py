@@ -11,11 +11,13 @@ class ChatModel(db.Model):
     event_id = db.Column(db.Integer)
     chat_creation_time = db.Column(db.String(80))
     chat_expiration_time = db.Column(db.String(80))
+    channel_id = db.Column(db.String(80))
 
-    def __init__(self, chat_creation_time, chat_expiration_time, event_id):
+    def __init__(self, chat_creation_time, chat_expiration_time, event_id, channel_id=""):
         self.chat_expiration_time = chat_expiration_time
         self.chat_creation_time = chat_creation_time
         self.event_id = event_id
+        self.channel_id = channel_id
 
     def save_to_db(self):
         db.session.add(self)
@@ -28,7 +30,7 @@ class ChatModel(db.Model):
     def json(self):
         return {'chat_creation_time': self.chat_creation_time,
                 'chat_expiration_time': self.chat_expiration_time,
-                "id": self.id, "event_id": self.event_id}
+                "id": self.id, "event_id": self.event_id, "channel_id": self.channel_id}
 
     @classmethod
     def find_by_username(cls, username):

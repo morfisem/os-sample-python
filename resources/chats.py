@@ -10,12 +10,19 @@ class Chats(Resource):
     @classmethod
     def create_chat(cls, event_time, event_id):
         current_time = datetime.datetime.now()
-        expiration_time = RequestModel.expiration_to_datetime(event_time) + datetime.timedelta(hours=2)
-        print("creating chat event time:",event_time, str(expiration_time), str(RequestModel.expiration_to_datetime(event_time)))
+        if event_time and event_time != "":
+            expiration_time = RequestModel.expiration_to_datetime(event_time) + datetime.timedelta(hours=2)
+        else:
+            expiration_time = ""
         chat = ChatModel(chat_creation_time=str(current_time), event_id=event_id,
                          chat_expiration_time=str(expiration_time))
         chat.save_to_db()
         return chat
+    @classmethod
+    def delete_chat(cls, event_id):
+        chat = ChatModel.find_by_filters(event_id=event_id)
+        if chat:
+            chat.delete_from_db()
     
     @jwt_required
     def get(self):
@@ -29,27 +36,26 @@ class Chats(Resource):
         for chat in user_chats:
             event = EventModel.find_by_id(chat.event_id)
             chats_json.append({'users': event.participants, "id": chat.id, "event_id": chat.event_id,
-                                'title': event.title})
+                                'title': event.title, "channel_id": chat.channel_id})
         return chats_json
 
     @jwt_required
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('event_id', type=str, required=True, help='Must enter the store id')
+        parser.add_argument('event_id', type=str, required=True, help='Must enter the event id')
+        parser.add_argument('channel_id', type=str, required=True, help='Must enter the channel id')
 
         data = parser.parse_args()
-        event_id = RequestModel.request_types.index(data['event_id'])
+        event_id = data["event_id"]
+        channel_id = data["channel_id"]
+
         current_chat = ChatModel.find_by_filters(event_id=event_id)
         if current_chat:
+            current_chat.channel_id = channel_id
+            current_chat.save_to_db()
             return current_chat.json()
 
-        event = EventModel.find_by_id(chat.event_id)
-        if not event:
-            return {'message': 'Event not found'}, 404
-        
-        chat = Chats.create_chat(event_time=event.event_time, event_type=event_type)
-        
-        return chat.json()
+        return {'message': 'chat not found'}, 404
 
 
 class Messages(Resource):
